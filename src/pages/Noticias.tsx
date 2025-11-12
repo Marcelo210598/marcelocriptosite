@@ -37,11 +37,11 @@ export default function Noticias() {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchNews({ lang, categories: selectedCategories, pageSize: 48 });
+        const data = await fetchNews({ lang, categories: selectedCategories, pageSize: 48, maxAgeDays: 7 });
         if (!cancelled) setItemsAll(data);
         // Fallback simples: se não houver dados em PT, tenta EN
         if (!cancelled && lang === 'PT' && data.length === 0) {
-          const enData = await fetchNews({ lang: 'EN', categories: selectedCategories, pageSize: 48 });
+          const enData = await fetchNews({ lang: 'EN', categories: selectedCategories, pageSize: 48, maxAgeDays: 7 });
           setItemsAll(enData);
         }
       } catch (e: any) {
@@ -199,7 +199,8 @@ export default function Noticias() {
   // Proxy simples para imagens externas que podem ser bloqueadas por ORB
   const toProxy = (url?: string): string => {
     if (!url) return '';
-    return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=800&h=320&fit=cover&output=webp`;
+    const normalized = url.replace(/^http:\/\//i, 'https://');
+    return `https://images.weserv.nl/?url=${encodeURIComponent(normalized)}&w=800&h=320&fit=cover&output=webp`;
   };
   const fallbackImg = 'data:image/svg+xml;utf8,' + encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="160"><rect width="100%" height="100%" fill="#1f2937"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-family="sans-serif" font-size="24">Imagem indisponível</text></svg>'

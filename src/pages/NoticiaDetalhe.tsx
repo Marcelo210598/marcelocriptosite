@@ -83,7 +83,18 @@ export default function NoticiaDetalhe() {
         <Link to="/noticias" className="text-blue-600 hover:text-blue-800">← Voltar para Notícias</Link>
         <article className="mt-6 bg-white shadow rounded overflow-hidden">
           {article.imageUrl ? (
-            <img src={article.imageUrl} alt={article.title} className="w-full h-64 object-cover" />
+            <img
+              src={toProxy(article.imageUrl)}
+              alt={article.title}
+              className="w-full h-64 object-cover"
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              crossOrigin="anonymous"
+              onError={(e) => {
+                e.currentTarget.src = fallbackImg;
+              }}
+            />
           ) : (
             <div className="w-full h-64 bg-gray-200" />
           )}
@@ -154,3 +165,16 @@ export default function NoticiaDetalhe() {
     </section>
   );
 }
+
+// Proxy para evitar bloqueios/Mixed Content em imagens externas
+const toProxy = (url?: string): string => {
+  if (!url) return '';
+  const normalized = url.replace(/^http:\/\//i, 'https://');
+  return `https://images.weserv.nl/?url=${encodeURIComponent(normalized)}&w=1200&h=300&fit=cover&output=webp`;
+};
+
+const fallbackImg =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300"><rect width="100%" height="100%" fill="#e5e7eb"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#6b7280" font-family="sans-serif" font-size="24">Imagem indisponível</text></svg>'
+  );

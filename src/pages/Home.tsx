@@ -17,10 +17,10 @@ export default function Home(): React.JSX.Element {
       try {
         // Buscar notícias com foco em categorias populares
         const cats = ['Blockchain','Altcoin','Market','Trading','Regulation','Technology','DeFi','NFT']
-        let data = await fetchNews({ lang: 'PT', categories: cats, pageSize: 24 })
+        let data = await fetchNews({ lang: 'PT', categories: cats, pageSize: 24, maxAgeDays: 7 })
         // Fallback para EN se vier pouco conteúdo
         if (data.length < 5) {
-          const en = await fetchNews({ lang: 'EN', categories: cats, pageSize: 24 })
+          const en = await fetchNews({ lang: 'EN', categories: cats, pageSize: 24, maxAgeDays: 7 })
           data = [...data, ...en]
         }
         // Filtrar itens com imagem para melhor visual do carrossel e ordenar por data
@@ -87,7 +87,18 @@ export default function Home(): React.JSX.Element {
           <div className="relative mt-4 overflow-hidden rounded-lg border border-zinc-700">
             {/* Imagem de fundo */}
             {current.imageUrl ? (
-              <img src={current.imageUrl} alt={current.title} className="h-52 w-full object-cover" />
+              <img
+                src={toProxy(current.imageUrl)}
+                alt={current.title}
+                className="h-52 w-full object-cover"
+                loading="lazy"
+                decoding="async"
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  e.currentTarget.src = fallbackImg
+                }}
+              />
             ) : (
               <div className="h-52 w-full bg-zinc-800" />
             )}
@@ -116,3 +127,16 @@ export default function Home(): React.JSX.Element {
     </section>
   )
 }
+
+// Proxy simples para evitar bloqueio/mixed content e melhorar compatibilidade
+const toProxy = (url?: string): string => {
+  if (!url) return ''
+  const normalized = url.replace(/^http:\/\//i, 'https://')
+  return `https://images.weserv.nl/?url=${encodeURIComponent(normalized)}&w=1200&h=300&fit=cover&output=webp`
+}
+
+const fallbackImg =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300"><rect width="100%" height="100%" fill="#1f2937"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-family="sans-serif" font-size="24">Imagem indisponível</text></svg>'
+  )

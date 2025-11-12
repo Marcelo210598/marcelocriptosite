@@ -14,7 +14,7 @@ export default function App(): React.JSX.Element {
       {/* Cabeçalho com navegação */}
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-        <Link to="/" className="text-base font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-cyan-400 to-fuchsia-400 bg-clip-text text-transparent">Marcelo Cripto Labs</Link>
+        <Link to="/" className="text-base font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-cyan-400 to-fuchsia-400 bg-clip-text text-transparent">Marcelo Cripto</Link>
           <nav className="flex gap-5 text-sm text-zinc-300">
             <Link to="/noticias" className="hover:text-white">Notícias</Link>
             <Link to="/analises" className="hover:text-white">Análises</Link>
@@ -38,7 +38,7 @@ export default function App(): React.JSX.Element {
       {/* Rodapé */}
       <footer className="border-t border-zinc-800 mt-10">
         <div className="mx-auto max-w-5xl px-6 py-6 text-sm text-zinc-400">
-          <p>© {new Date().getFullYear()} Marcelo Cripto Labs. Todos os direitos reservados.</p>
+        <p>© {new Date().getFullYear()} Marcelo Cripto. Todos os direitos reservados.</p>
           <p className="mt-1">Este site é informativo e não constitui recomendação de investimento.</p>
         </div>
       </footer>

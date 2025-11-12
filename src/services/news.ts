@@ -14,6 +14,8 @@ type FetchNewsParams = {
   categories?: string[];
   excludeCategories?: string[];
   pageSize?: number;
+  // Filtra notícias por idade máxima (em dias). Se não definido, não filtra por idade.
+  maxAgeDays?: number;
   signal?: AbortSignal;
 };
 
@@ -24,6 +26,7 @@ export async function fetchNews({
   categories = [],
   excludeCategories = [],
   pageSize = 24,
+  maxAgeDays,
   signal,
 }: FetchNewsParams = {}): Promise<NewsArticle[]> {
   const url = new URL('https://min-api.cryptocompare.com/data/v2/news/');
@@ -60,5 +63,14 @@ export async function fetchNews({
     body: item.body || item.summary || undefined,
   }));
 
-  return mapped.slice(0, pageSize);
+  // Opcional: filtrar por idade máxima
+  let filtered = mapped;
+  if (typeof maxAgeDays === 'number' && Number.isFinite(maxAgeDays) && maxAgeDays > 0) {
+    const cutoffSec = Math.floor(Date.now() / 1000) - Math.floor(maxAgeDays * 24 * 60 * 60);
+    filtered = mapped.filter((n) => n.publishedAt >= cutoffSec);
+  }
+
+  // Ordena por mais recentes primeiro (desc) e limita ao pageSize
+  const sortedDesc = filtered.sort((a, b) => b.publishedAt - a.publishedAt);
+  return sortedDesc.slice(0, pageSize);
 }
