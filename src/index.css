@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset e tema moderno */
+:root {
+  color-scheme: light dark;
+  --bg-start: #0b1220; /* azul petróleo escuro */
+  --bg-mid:   #0a0f19;
+  --bg-end:   #05070d;
+  --accent:   #6366f1; /* indigo-500 */
+  --accent-2: #22d3ee; /* cyan-400 */
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  background:
+    radial-gradient(1200px 600px at 50% -200px, var(--bg-start) 0%, var(--bg-mid) 60%, var(--bg-end) 100%),
+    linear-gradient(180deg, rgba(99,102,241,0.08) 0%, rgba(34,211,238,0.04) 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Links em destaque */
+a {
+  color: var(--accent);
+}
+a:hover {
+  color: var(--accent-2);
+}
+
+/* Rolagem suave para navegação por âncoras */
+html { scroll-behavior: smooth; }
+
+/* Separação fluida entre parágrafos na análise, com tons alternados */
+.analysis-flow p {
+  margin-top: 0.75rem; /* mt-3 */
+  padding: 0.9rem 1rem; /* p-4-ish */
+  border-radius: 0.75rem; /* rounded-xl */
+  border: 1px solid #3f3f46; /* zinc-700 */
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.analysis-flow p:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.04); /* leve claridade */
+  border-color: #4b4b52; /* sutilmente mais claro */
+}
+
+.analysis-flow p:nth-of-type(even) {
+  background-color: rgba(24, 24, 27, 0.45); /* tom mais escuro */
+  border-color: #3f3f46; /* zinc-700 */
+}
+
+.analysis-flow p:hover {
+  background-color: rgba(99, 102, 241, 0.08); /* leve indigo ao hover */
+}
