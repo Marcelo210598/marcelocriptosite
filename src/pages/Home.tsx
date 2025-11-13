@@ -9,6 +9,7 @@ import { PriceChangeBadge } from '../components/UIComponents'
 import { useFavorites } from '../hooks/useStore'
 import { MarketStatsWidget } from '../components/MarketStats'
 import { MarketDebug } from '../components/MarketDebug'
+import { PageTitle, SectionTitle, BodyText } from '../components/ResponsiveText'
 
 export default function Home(): React.JSX.Element {
   const [items, setItems] = useState<NewsArticle[]>([])
@@ -167,11 +168,11 @@ export default function Home(): React.JSX.Element {
         </script>
       </Helmet>
       <section className="mx-auto max-w-5xl px-6 py-10">
-        <h1 className="text-3xl font-bold animate-fade-in-up">Noticias e Analises</h1>
-        <p className="mt-3 max-w-2xl text-zinc-300 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+        <PageTitle className="animate-fade-in-up">Noticias e Analises</PageTitle>
+        <BodyText className="animate-fade-in-up max-w-2xl" style={{animationDelay: '0.2s'}} muted>
           Acompanhe novidades, entenda conceitos e aprofunde-se em análises fundamentais do mercado
           de criptomoedas.
-        </p>
+        </BodyText>
       <div className="mt-5 flex gap-3 animate-fade-in-up" style={{animationDelay: '0.4s'}}>
         <Link to="/analises" className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition-all-300 hover-lift">Ir para Análises</Link>
         <Link to="/noticias" className="rounded border border-indigo-500/50 px-4 py-2 text-sm font-medium text-indigo-200 hover:border-indigo-400 hover:bg-indigo-500/10 transition-all-300">Ver Notícias</Link>
@@ -183,7 +184,7 @@ export default function Home(): React.JSX.Element {
 
       <div className="mt-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Market Snapshot</h2>
+          <SectionTitle>Market Snapshot</SectionTitle>
           <div className="flex items-center gap-2">
             <label className="text-sm text-zinc-400">Moeda:</label>
             <select value={vs} onChange={(e) => setVs(e.target.value as typeof vs)} className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-white">
@@ -222,7 +223,7 @@ export default function Home(): React.JSX.Element {
 
       <div className="mt-10">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Trending & Top Movers (24h)</h2>
+          <SectionTitle>Trending & Top Movers (24h)</SectionTitle>
         </div>
         {marketLoading && (
           <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -271,7 +272,7 @@ export default function Home(): React.JSX.Element {
       {/* Carrossel de notícias mais comentadas */}
       <div className="mt-10">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Em destaque</h2>
+          <SectionTitle>Em destaque</SectionTitle>
         </div>
 
         {/* Estados */}
@@ -343,9 +344,9 @@ export default function Home(): React.JSX.Element {
       {favoriteCoins.length > 0 && (
         <div className="mt-10">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
+            <SectionTitle className="flex items-center gap-2">
               <span className="text-yellow-400">⭐</span> Suas Criptomoedas Favoritas
-            </h2>
+            </SectionTitle>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {favoriteCoins.map((coin) => (
@@ -375,7 +376,7 @@ export default function Home(): React.JSX.Element {
 
       {/* Debug do Mercado - Remover depois de testar */}
       <div className="mt-10">
-        <h2 className="text-xl font-semibold mb-4">Debug do Mercado</h2>
+        <SectionTitle>Debug do Mercado</SectionTitle>
         <MarketDebug />
       </div>
 

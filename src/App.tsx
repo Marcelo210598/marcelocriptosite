@@ -13,6 +13,8 @@ import { useTheme } from './hooks/useStore'
 import { EnhancedFooter } from './components/EnhancedFooter'
 import { ScrollProgress } from './components/ScrollEffects'
 import { ParticleBackground } from './components/ParticleBackground'
+import { MobileMenu } from './components/MobileMenu'
+import { MobileQuickActions } from './components/MobileQuickActions'
 
 export default function App(): React.JSX.Element {
   const { isDark } = useTheme()
@@ -27,9 +29,11 @@ export default function App(): React.JSX.Element {
       
       {/* Cabeçalho com navegação */}
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-        <Link to="/" className="text-base font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-cyan-400 to-fuchsia-400 bg-clip-text text-transparent">Marcelo Cripto</Link>
-          <nav className="flex items-center gap-4">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
+          <Link to="/" className="text-base font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-cyan-400 to-fuchsia-400 bg-clip-text text-transparent">Marcelo Cripto</Link>
+          
+          {/* Navegação desktop */}
+          <nav className="hidden lg:flex items-center gap-4">
             <div className="flex gap-5 text-sm text-zinc-300">
               <Link to="/noticias" className="hover:text-white transition-colors">Notícias</Link>
               <Link to="/analises" className="hover:text-white transition-colors">Análises</Link>
@@ -41,6 +45,13 @@ export default function App(): React.JSX.Element {
               <ThemeToggle />
             </div>
           </nav>
+
+          {/* Menu mobile */}
+          <div className="flex lg:hidden items-center gap-2">
+            <NotificationToggle />
+            <ThemeToggle />
+            <MobileMenu />
+          </div>
         </div>
       </header>
 
@@ -71,6 +82,9 @@ export default function App(): React.JSX.Element {
 
       {/* Container de notificações */}
       <NotificationContainer />
+
+      {/* Ações rápidas para mobile */}
+      <MobileQuickActions />
     </main>
   )
 }

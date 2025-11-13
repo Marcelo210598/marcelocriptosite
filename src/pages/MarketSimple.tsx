@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { fetchMarkets, type MarketCoin } from '../services/coingecko'
 import { InlineLoader } from '../components/Loading'
+import { MobileMarketGrid } from '../components/MobileMarketComponents'
+import { LazyImage } from '../components/OptimizedImage'
 
 export default function Market(): React.JSX.Element {
   const [coins, setCoins] = useState<MarketCoin[]>([])
@@ -56,30 +58,52 @@ export default function Market(): React.JSX.Element {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
-      <h1 className="text-3xl font-bold mb-6">Mercado de Criptomoedas</h1>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-10">
+      {/* Header mobile-otimizado */}
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+          Mercado de Criptomoedas
+        </h1>
+        <p className="text-zinc-400 text-sm sm:text-base">
+          Acompanhe os preços e variações em tempo real
+        </p>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {coins.map((coin) => (
-          <div key={coin.id} className="bg-zinc-900 rounded-lg p-4 border border-zinc-700 hover:border-indigo-500 transition-colors">
-            <div className="flex items-center gap-3 mb-3">
-              <img src={coin.image} alt={coin.name} className="w-8 h-8 rounded-full" />
-              <div>
-                <h3 className="text-white font-medium">{coin.name}</h3>
-                <p className="text-zinc-400 text-sm">{coin.symbol.toUpperCase()}</p>
+      {/* Grid responsivo - usa componentes mobile em telas pequenas */}
+      <div className="block lg:hidden">
+        <MobileMarketGrid coins={coins} loading={loading} />
+      </div>
+      
+      {/* Grid desktop - mantém visualização compacta */}
+      <div className="hidden lg:block">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {coins.map((coin) => (
+            <div key={coin.id} className="bg-zinc-900 rounded-lg p-4 border border-zinc-700 hover:border-indigo-500 transition-colors hover:shadow-lg hover:shadow-indigo-500/20">
+              <div className="flex items-center gap-3 mb-3">
+                <LazyImage 
+                  src={coin.image} 
+                  alt={coin.name} 
+                  className="w-8 h-8 rounded-full" 
+                  width={32} 
+                  height={32} 
+                />
+                <div>
+                  <h3 className="text-white font-medium truncate">{coin.name}</h3>
+                  <p className="text-zinc-400 text-sm">{coin.symbol.toUpperCase()}</p>
+                </div>
+              </div>
+              <div className="text-white font-mono text-lg">
+                ${coin.current_price.toLocaleString()}
+              </div>
+              <div className={`text-sm mt-1 flex items-center gap-1 ${
+                coin.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {coin.price_change_percentage_24h >= 0 ? '▲' : '▼'}
+                {Math.abs(coin.price_change_percentage_24h).toFixed(2)}%
               </div>
             </div>
-            <div className="text-white font-mono">
-              ${coin.current_price.toLocaleString()}
-            </div>
-            <div className={`text-sm mt-1 ${
-              coin.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'
-            }`}>
-              {coin.price_change_percentage_24h >= 0 ? '+' : ''}
-              {coin.price_change_percentage_24h.toFixed(2)}%
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   )
