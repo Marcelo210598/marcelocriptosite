@@ -1,7 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { fetchNews, type NewsArticle } from '../services/news'
+import { fetchMarkets, type MarketCoin } from '../services/coingecko'
 import { Helmet } from 'react-helmet-async'
+import { MarketSkeleton, NewsCarouselSkeleton, CoinListSkeleton } from '../components/SkeletonLoader'
+import { FavoriteButton } from '../components/FavoriteButton'
+import { PriceChangeBadge } from '../components/UIComponents'
+import { useFavorites } from '../hooks/useStore'
+import { MarketStatsWidget } from '../components/MarketStats'
 
 export default function Home(): React.JSX.Element {
   const [items, setItems] = useState<NewsArticle[]>([])
@@ -10,7 +16,21 @@ export default function Home(): React.JSX.Element {
   const [idx, setIdx] = useState(0)
   const navigate = useNavigate()
 
+  const [vs, setVs] = useState<'usd' | 'brl' | 'eur'>('usd')
+  const [marketCoins, setMarketCoins] = useState<MarketCoin[]>([])
+  const [marketLoading, setMarketLoading] = useState(false)
+  const [marketError, setMarketError] = useState<string | null>(null)
+  const didInitNews = useRef(false)
+  const didInitMarkets = useRef(false)
+  const { favorites } = useFavorites()
+
   useEffect(() => {
+    // Evita execução duplicada em dev (React.StrictMode)
+    if (import.meta.env?.DEV && !didInitNews.current) {
+      didInitNews.current = true
+      return
+    }
+    const ctrl = new AbortController()
     let cancelled = false
     const load = async () => {
       setLoading(true)
@@ -18,11 +38,15 @@ export default function Home(): React.JSX.Element {
       try {
         // Buscar notícias com foco em categorias populares
         const cats = ['Blockchain','Altcoin','Market','Trading','Regulation','Technology','DeFi','NFT']
-        let data = await fetchNews({ lang: 'PT', categories: cats, pageSize: 24, maxAgeDays: 7 })
-        // Fallback para EN se vier pouco conteúdo
-        if (data.length < 5) {
-          const en = await fetchNews({ lang: 'EN', categories: cats, pageSize: 24, maxAgeDays: 7 })
-          data = [...data, ...en]
+        let data = await fetchNews({ lang: 'PT', categories: cats, pageSize: 24, maxAgeDays: 7, signal: ctrl.signal })
+        // Fallback para EN se vier pouco conteúdo; se EN falhar, ignorar (mantém PT)
+        if (data.length < 5 && !import.meta.env.DEV) {
+          try {
+            const en = await fetchNews({ lang: 'EN', categories: cats, pageSize: 24, maxAgeDays: 7, signal: ctrl.signal })
+            data = [...data, ...en]
+          } catch (e) {
+            // ignora falhas na busca EN quando já temos algum conteúdo
+          }
         }
         // Filtrar itens com imagem para melhor visual do carrossel e ordenar por data
         const withImages = data.filter((d) => !!d.imageUrl)
@@ -43,7 +67,7 @@ export default function Home(): React.JSX.Element {
       }
     }
     load()
-    return () => { cancelled = true }
+    return () => { cancelled = true; ctrl.abort() }
   }, [])
 
   // Auto-avançar o carrossel
@@ -61,6 +85,54 @@ export default function Home(): React.JSX.Element {
   const siteUrl = `${siteOrigin}/`
   const brandOgUrl = `${siteOrigin}/brand-og.png`
   const brandLogoUrl = `${siteOrigin}/brand-logo.png`
+
+  useEffect(() => {
+    // Evita execução duplicada em dev (React.StrictMode)
+    if (import.meta.env?.DEV && !didInitMarkets.current) {
+      didInitMarkets.current = true
+      return
+    }
+    const ctrl = new AbortController()
+    let cancelled = false
+    const loadMarkets = async () => {
+      setMarketLoading(true)
+      setMarketError(null)
+      try {
+        const data = await fetchMarkets({ vsCurrency: vs, perPage: 100, page: 1, order: 'market_cap_desc', signal: ctrl.signal })
+        if (!cancelled) setMarketCoins(data)
+      } catch (e: any) {
+        if (e?.name === 'AbortError' || /aborted/i.test(String(e?.message))) {
+          // ignorar abortos de Strict Mode/dev
+        } else if (!cancelled) {
+          setMarketError('Não foi possível carregar o mercado agora.')
+        }
+      } finally {
+        if (!cancelled) setMarketLoading(false)
+      }
+    }
+    loadMarkets()
+    return () => { cancelled = true; ctrl.abort() }
+  }, [vs])
+
+  const nfCurrency = useMemo(() => new Intl.NumberFormat('en-US', { style: 'currency', currency: vs.toUpperCase(), maximumFractionDigits: 0 }), [vs])
+  const nfCompact = useMemo(() => new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }), [])
+
+  const totalMarketCap = useMemo(() => marketCoins.reduce((sum, c) => sum + (c.market_cap || 0), 0), [marketCoins])
+  const totalVolume24h = useMemo(() => marketCoins.reduce((sum, c) => sum + (c.total_volume || 0), 0), [marketCoins])
+  const btcMc = useMemo(() => (marketCoins.find((c) => c.id === 'bitcoin')?.market_cap || 0), [marketCoins])
+  const ethMc = useMemo(() => (marketCoins.find((c) => c.id === 'ethereum')?.market_cap || 0), [marketCoins])
+  const btcDom = useMemo(() => (totalMarketCap > 0 ? (btcMc / totalMarketCap) * 100 : 0), [btcMc, totalMarketCap])
+  const ethDom = useMemo(() => (totalMarketCap > 0 ? (ethMc / totalMarketCap) * 100 : 0), [ethMc, totalMarketCap])
+
+  const movers = useMemo(() => marketCoins.filter((c) => Number.isFinite(c.price_change_percentage_24h)), [marketCoins])
+  const topGainers = useMemo(() => [...movers].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0, 5), [movers])
+  const topLosers = useMemo(() => [...movers].sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, 5), [movers])
+  
+  // Favoritos do usuário
+  const favoriteCoins = useMemo(() => 
+    marketCoins.filter(coin => favorites.includes(coin.id)).slice(0, 5), 
+    [marketCoins, favorites]
+  )
 
   return (
     <>
@@ -94,14 +166,105 @@ export default function Home(): React.JSX.Element {
         </script>
       </Helmet>
       <section className="mx-auto max-w-5xl px-6 py-10">
-        <h1 className="text-3xl font-bold">Noticias e Analises</h1>
-        <p className="mt-3 max-w-2xl text-zinc-300">
+        <h1 className="text-3xl font-bold animate-fade-in-up">Noticias e Analises</h1>
+        <p className="mt-3 max-w-2xl text-zinc-300 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
           Acompanhe novidades, entenda conceitos e aprofunde-se em análises fundamentais do mercado
           de criptomoedas.
         </p>
-      <div className="mt-5 flex gap-3">
-        <Link to="/analises" className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500">Ir para Análises</Link>
-        <Link to="/noticias" className="rounded border border-indigo-500/50 px-4 py-2 text-sm font-medium text-indigo-200 hover:border-indigo-400 hover:bg-indigo-500/10">Ver Notícias</Link>
+      <div className="mt-5 flex gap-3 animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+        <Link to="/analises" className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition-all-300 hover-lift">Ir para Análises</Link>
+        <Link to="/noticias" className="rounded border border-indigo-500/50 px-4 py-2 text-sm font-medium text-indigo-200 hover:border-indigo-400 hover:bg-indigo-500/10 transition-all-300">Ver Notícias</Link>
+      </div>
+
+      <div className="mt-8">
+        <MarketStatsWidget />
+      </div>
+
+      <div className="mt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Market Snapshot</h2>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-zinc-400">Moeda:</label>
+            <select value={vs} onChange={(e) => setVs(e.target.value as typeof vs)} className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-white">
+              <option value="usd">USD</option>
+              <option value="brl">BRL</option>
+              <option value="eur">EUR</option>
+            </select>
+            <Link to={`/market?vs=${vs}`} className="text-xs text-indigo-300 hover:text-indigo-200">Ver mercado completo →</Link>
+          </div>
+        </div>
+        {marketLoading && <MarketSkeleton />}
+        {marketError && (
+          <div className="mt-4 rounded border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">{marketError}</div>
+        )}
+        {!marketLoading && !marketError && (
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+              <div className="text-xs text-zinc-400">Market Cap</div>
+              <div className="mt-1 text-lg font-semibold">{nfCurrency.format(totalMarketCap)}</div>
+            </div>
+            <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+              <div className="text-xs text-zinc-400">Volume 24h</div>
+              <div className="mt-1 text-lg font-semibold">{nfCurrency.format(totalVolume24h)}</div>
+            </div>
+            <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+              <div className="text-xs text-zinc-400">BTC Dominance</div>
+              <div className="mt-1 text-lg font-semibold">{btcDom.toFixed(1)}%</div>
+            </div>
+            <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+              <div className="text-xs text-zinc-400">ETH Dominance</div>
+              <div className="mt-1 text-lg font-semibold">{ethDom.toFixed(1)}%</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-10">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Trending & Top Movers (24h)</h2>
+        </div>
+        {marketLoading && (
+          <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <CoinListSkeleton />
+            <CoinListSkeleton />
+          </div>
+        )}
+        {(!marketLoading && !marketError) && (
+          <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <div className="text-sm text-zinc-400">Em alta</div>
+              <ul className="mt-2 divide-y divide-zinc-800 rounded-lg border border-zinc-700 bg-zinc-900">
+                {topGainers.map((c) => (
+                  <li key={c.id} className="flex items-center gap-3 px-3 py-2 hover:bg-zinc-800 transition-colors group">
+                    <img src={c.image} alt={c.name} className="h-6 w-6 rounded-full" />
+                    <Link to={`/moeda/${encodeURIComponent(c.id)}`} className="flex-1 text-sm font-medium hover:underline">
+                      {c.name} 
+                      <span className="ml-1 text-xs text-zinc-400">{c.symbol.toUpperCase()}</span>
+                    </Link>
+                    <FavoriteButton coinId={c.id} coinName={c.name} size="sm" />
+                    <PriceChangeBadge change={c.price_change_percentage_24h} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="text-sm text-zinc-400">Em queda</div>
+              <ul className="mt-2 divide-y divide-zinc-800 rounded-lg border border-zinc-700 bg-zinc-900">
+                {topLosers.map((c) => (
+                  <li key={c.id} className="flex items-center gap-3 px-3 py-2 hover:bg-zinc-800 transition-colors group">
+                    <img src={c.image} alt={c.name} className="h-6 w-6 rounded-full" />
+                    <Link to={`/moeda/${encodeURIComponent(c.id)}`} className="flex-1 text-sm font-medium hover:underline">
+                      {c.name} 
+                      <span className="ml-1 text-xs text-zinc-400">{c.symbol.toUpperCase()}</span>
+                    </Link>
+                    <FavoriteButton coinId={c.id} coinName={c.name} size="sm" />
+                    <PriceChangeBadge change={c.price_change_percentage_24h} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Carrossel de notícias mais comentadas */}
@@ -111,9 +274,7 @@ export default function Home(): React.JSX.Element {
         </div>
 
         {/* Estados */}
-        {loading && (
-          <div className="mt-4 h-52 rounded-lg border border-zinc-700 bg-zinc-900/40 animate-pulse" />
-        )}
+        {loading && <NewsCarouselSkeleton />}
         {error && (
           <div className="mt-4 rounded border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">{error}</div>
         )}
@@ -159,6 +320,58 @@ export default function Home(): React.JSX.Element {
           </div>
         )}
       </div>
+
+      <div className="mt-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold">Manchetes</h3>
+          <Link to="/noticias" className="text-xs text-indigo-300 hover:text-indigo-200">Ver todas →</Link>
+        </div>
+        {!loading && !error && items.length > 0 && (
+          <div className="mt-2 overflow-x-auto whitespace-nowrap rounded-lg border border-zinc-700 bg-zinc-900 py-2">
+            {items.map((n) => (
+              <button key={n.id} onClick={() => openArticle(n)} className="inline-flex items-center gap-2 rounded px-3 py-1 text-left hover:bg-zinc-800">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                <span className="text-xs text-zinc-200">{n.title}</span>
+                <span className="text-[10px] text-zinc-500">• {n.source}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {/* Seção de Favoritos */}
+      {favoriteCoins.length > 0 && (
+        <div className="mt-10">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <span className="text-yellow-400">⭐</span> Suas Criptomoedas Favoritas
+            </h2>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {favoriteCoins.map((coin) => (
+              <Link
+                key={coin.id}
+                to={`/moeda/${encodeURIComponent(coin.id)}`}
+                className="group rounded-lg border border-zinc-700 bg-zinc-900 p-4 hover:border-indigo-500 transition-all duration-200 hover:scale-105"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img src={coin.image} alt={coin.name} className="h-8 w-8 rounded-full" />
+                    <div>
+                      <div className="font-medium group-hover:text-indigo-400 transition-colors">{coin.name}</div>
+                      <div className="text-xs text-zinc-400">{coin.symbol.toUpperCase()}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-mono text-sm">{nfCurrency.format(coin.current_price)}</div>
+                    <PriceChangeBadge change={coin.price_change_percentage_24h} />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       </section>
     </>
   )

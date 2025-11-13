@@ -16,7 +16,8 @@ export async function fetchMarkets(
     perPage = 25,
     page = 1,
     order = 'market_cap_desc',
-  }: { vsCurrency?: string; perPage?: number; page?: number; order?: string }
+    signal,
+  }: { vsCurrency?: string; perPage?: number; page?: number; order?: string; signal?: AbortSignal }
 ): Promise<MarketCoin[]> {
   const url = new URL('https://api.coingecko.com/api/v3/coins/markets')
   url.searchParams.set('vs_currency', vsCurrency)
@@ -28,6 +29,7 @@ export async function fetchMarkets(
 
   const res = await fetch(url.toString(), {
     headers: { 'accept': 'application/json' },
+    signal,
   })
   if (!res.ok) {
     throw new Error(`CoinGecko error ${res.status}`)
