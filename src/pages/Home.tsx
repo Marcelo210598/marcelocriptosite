@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { fetchNews, type NewsArticle } from '../services/news'
+import { Helmet } from 'react-helmet-async'
 
 export default function Home(): React.JSX.Element {
   const [items, setItems] = useState<NewsArticle[]>([])
@@ -56,14 +57,43 @@ export default function Home(): React.JSX.Element {
   const goPrev = () => setIdx((i) => (i - 1 + items.length) % items.length)
   const goNext = () => setIdx((i) => (i + 1) % items.length)
   const openArticle = (a: NewsArticle) => navigate(`/noticia/${encodeURIComponent(a.id)}`, { state: a })
+  const siteUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : 'https://marcelocriptosite.vercel.app/'
+  const defaultOgImage = 'https://og-image.vercel.app/Marcelo%20Cripto.png?theme=dark&md=1&fontSize=75px&desc=Not%C3%ADcias%20e%20mercado'
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="text-3xl font-bold">Noticias e Analises</h1>
-      <p className="mt-3 max-w-2xl text-zinc-300">
-        Acompanhe novidades, entenda conceitos e aprofunde-se em análises fundamentais do mercado
-        de criptomoedas.
-      </p>
+    <>
+      <Helmet>
+        <title>Marcelo Cripto — Notícias e Mercado de Cripto</title>
+        <meta name="description" content="Acompanhe notícias recentes de criptomoedas, análises e mercado." />
+        <link rel="canonical" href={siteUrl} />
+        <meta property="og:title" content="Marcelo Cripto — Notícias e Mercado de Cripto" />
+        <meta property="og:description" content="Acompanhe notícias recentes de criptomoedas, análises e mercado." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={siteUrl} />
+        <meta property="og:image" content={defaultOgImage} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Marcelo Cripto — Notícias e Mercado de Cripto" />
+        <meta name="twitter:description" content="Acompanhe notícias recentes de criptomoedas, análises e mercado." />
+        <meta name="twitter:image" content={defaultOgImage} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Marcelo Cripto",
+            url: siteUrl,
+            logo: {
+              "@type": "ImageObject",
+              url: defaultOgImage
+            }
+          })}
+        </script>
+      </Helmet>
+      <section className="mx-auto max-w-5xl px-6 py-10">
+        <h1 className="text-3xl font-bold">Noticias e Analises</h1>
+        <p className="mt-3 max-w-2xl text-zinc-300">
+          Acompanhe novidades, entenda conceitos e aprofunde-se em análises fundamentais do mercado
+          de criptomoedas.
+        </p>
       <div className="mt-5 flex gap-3">
         <Link to="/analises" className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500">Ir para Análises</Link>
         <Link to="/noticias" className="rounded border border-indigo-500/50 px-4 py-2 text-sm font-medium text-indigo-200 hover:border-indigo-400 hover:bg-indigo-500/10">Ver Notícias</Link>
@@ -124,7 +154,8 @@ export default function Home(): React.JSX.Element {
           </div>
         )}
       </div>
-    </section>
+      </section>
+    </>
   )
 }
 

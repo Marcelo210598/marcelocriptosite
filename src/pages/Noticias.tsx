@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { fetchNews, type NewsArticle } from '../services/news';
+import { Helmet } from 'react-helmet-async';
 
 export default function Noticias() {
   const [lang, setLang] = useState<'PT' | 'EN'>('PT');
@@ -206,7 +207,37 @@ export default function Noticias() {
     '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="160"><rect width="100%" height="100%" fill="#1f2937"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-family="sans-serif" font-size="24">Imagem indisponível</text></svg>'
   );
 
+  const siteUrl = typeof window !== 'undefined' ? `${window.location.origin}/noticias` : 'https://marcelocriptosite.vercel.app/noticias';
+  const defaultOgImage = 'https://og-image.vercel.app/Marcelo%20Cripto.png?theme=dark&md=1&fontSize=75px&desc=%C3%9Altimas%20Not%C3%ADcias'
+
   return (
+    <>
+      <Helmet>
+        <title>Últimas Notícias — Marcelo Cripto</title>
+        <meta name="description" content="Veja notícias recentes de criptomoedas, com filtro por categorias e idioma." />
+        <link rel="canonical" href={siteUrl} />
+        <meta property="og:title" content="Últimas Notícias — Marcelo Cripto" />
+        <meta property="og:description" content="Veja notícias recentes de criptomoedas, com filtro por categorias e idioma." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={siteUrl} />
+        <meta property="og:image" content={defaultOgImage} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Últimas Notícias — Marcelo Cripto" />
+        <meta name="twitter:description" content="Veja notícias recentes de criptomoedas, com filtro por categorias e idioma." />
+        <meta name="twitter:image" content={defaultOgImage} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Marcelo Cripto",
+            url: typeof window !== 'undefined' ? window.location.origin : 'https://marcelocriptosite.vercel.app',
+            logo: {
+              "@type": "ImageObject",
+              url: defaultOgImage
+            }
+          })}
+        </script>
+      </Helmet>
     <section className="py-16 bg-zinc-950">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between mb-6">
@@ -372,5 +403,6 @@ export default function Noticias() {
         )}
       </div>
     </section>
+    </>
   );
 }

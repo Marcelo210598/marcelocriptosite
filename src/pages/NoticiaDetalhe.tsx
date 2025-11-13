@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useParams, Link } from 'react-router-dom';
 import type { NewsArticle } from '../services/news';
+import { Helmet } from 'react-helmet-async';
 
 export default function NoticiaDetalhe() {
   const { id } = useParams();
@@ -77,7 +78,45 @@ export default function NoticiaDetalhe() {
     } catch {}
   };
 
+  const description = (article.body ? article.body.replace(/\s+/g, ' ').slice(0, 160) : `${article.title} — ${article.source}`);
+  const ogImg = article.imageUrl ? toProxy(article.imageUrl) : undefined;
+  const defaultOgImage = 'https://og-image.vercel.app/Marcelo%20Cripto.png?theme=dark&md=1&fontSize=75px&desc=Artigo'
+  const publishedIso = new Date(article.publishedAt * 1000).toISOString();
+
   return (
+    <>
+      <Helmet>
+        <title>{`${article.title} — Marcelo Cripto`}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={pageUrl} />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content={ogImg || defaultOgImage} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={ogImg || defaultOgImage} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "NewsArticle",
+            headline: article.title,
+            datePublished: publishedIso,
+            dateModified: publishedIso,
+            mainEntityOfPage: pageUrl,
+            image: ogImg || defaultOgImage,
+            author: { "@type": "Organization", name: article.source },
+            publisher: {
+              "@type": "Organization",
+              name: "Marcelo Cripto",
+              logo: { "@type": "ImageObject", url: defaultOgImage }
+            },
+            articleBody: article.body || undefined
+          })}
+        </script>
+      </Helmet>
     <section className="py-16 bg-gray-50">
       <div className="max-w-3xl mx-auto px-6">
         <Link to="/noticias" className="text-blue-600 hover:text-blue-800">← Voltar para Notícias</Link>
@@ -163,6 +202,7 @@ export default function NoticiaDetalhe() {
         </article>
       </div>
     </section>
+    </>
   );
 }
 
