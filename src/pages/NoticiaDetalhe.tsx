@@ -80,7 +80,9 @@ export default function NoticiaDetalhe() {
 
   const description = (article.body ? article.body.replace(/\s+/g, ' ').slice(0, 160) : `${article.title} — ${article.source}`);
   const ogImg = article.imageUrl ? toProxy(article.imageUrl) : undefined;
-  const defaultOgImage = 'https://og-image.vercel.app/Marcelo%20Cripto.png?theme=dark&md=1&fontSize=75px&desc=Artigo'
+  const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://marcelocriptosite.vercel.app';
+  const brandOgUrl = `${siteOrigin}/brand-og.png`;
+  const brandLogoUrl = `${siteOrigin}/brand-logo.png`;
   const publishedIso = new Date(article.publishedAt * 1000).toISOString();
 
   return (
@@ -93,11 +95,14 @@ export default function NoticiaDetalhe() {
         <meta property="og:description" content={description} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content={ogImg || defaultOgImage} />
+        <meta property="og:image" content={ogImg || brandOgUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={description} />
-        <meta name="twitter:image" content={ogImg || defaultOgImage} />
+        <meta name="twitter:image" content={ogImg || brandOgUrl} />
+        <meta name="twitter:image:alt" content="Banner institucional Marcelo Cripto" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -106,12 +111,12 @@ export default function NoticiaDetalhe() {
             datePublished: publishedIso,
             dateModified: publishedIso,
             mainEntityOfPage: pageUrl,
-            image: ogImg || defaultOgImage,
+            image: ogImg || brandOgUrl,
             author: { "@type": "Organization", name: article.source },
             publisher: {
               "@type": "Organization",
               name: "Marcelo Cripto",
-              logo: { "@type": "ImageObject", url: defaultOgImage }
+              logo: { "@type": "ImageObject", url: brandLogoUrl }
             },
             articleBody: article.body || undefined
           })}

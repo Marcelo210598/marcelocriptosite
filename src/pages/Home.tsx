@@ -57,8 +57,10 @@ export default function Home(): React.JSX.Element {
   const goPrev = () => setIdx((i) => (i - 1 + items.length) % items.length)
   const goNext = () => setIdx((i) => (i + 1) % items.length)
   const openArticle = (a: NewsArticle) => navigate(`/noticia/${encodeURIComponent(a.id)}`, { state: a })
-  const siteUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : 'https://marcelocriptosite.vercel.app/'
-  const defaultOgImage = 'https://og-image.vercel.app/Marcelo%20Cripto.png?theme=dark&md=1&fontSize=75px&desc=Not%C3%ADcias%20e%20mercado'
+  const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://marcelocriptosite.vercel.app'
+  const siteUrl = `${siteOrigin}/`
+  const brandOgUrl = `${siteOrigin}/brand-og.png`
+  const brandLogoUrl = `${siteOrigin}/brand-logo.png`
 
   return (
     <>
@@ -70,11 +72,14 @@ export default function Home(): React.JSX.Element {
         <meta property="og:description" content="Acompanhe notícias recentes de criptomoedas, análises e mercado." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={siteUrl} />
-        <meta property="og:image" content={defaultOgImage} />
+        <meta property="og:image" content={brandOgUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Marcelo Cripto — Notícias e Mercado de Cripto" />
         <meta name="twitter:description" content="Acompanhe notícias recentes de criptomoedas, análises e mercado." />
-        <meta name="twitter:image" content={defaultOgImage} />
+        <meta name="twitter:image" content={brandOgUrl} />
+        <meta name="twitter:image:alt" content="Banner institucional Marcelo Cripto" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -83,7 +88,7 @@ export default function Home(): React.JSX.Element {
             url: siteUrl,
             logo: {
               "@type": "ImageObject",
-              url: defaultOgImage
+              url: brandLogoUrl
             }
           })}
         </script>
