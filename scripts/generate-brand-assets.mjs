@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
+import pngToIco from 'png-to-ico';
 
 const publicDir = path.resolve('public');
 const srcSvgPath = path.join(publicDir, 'favicon.svg');
@@ -9,6 +10,9 @@ const logo512Path = path.join(publicDir, 'brand-logo-512.png');
 const logo512AliasPath = path.join(publicDir, 'brand-logo.png');
 const apple180Path = path.join(publicDir, 'apple-touch-icon.png');
 const ogPath = path.join(publicDir, 'brand-og.png');
+const fav16Path = path.join(publicDir, 'favicon-16x16.png');
+const fav32Path = path.join(publicDir, 'favicon-32x32.png');
+const icoPath = path.join(publicDir, 'favicon.ico');
 
 async function ensureDir(p) {
   await fs.promises.mkdir(p, { recursive: true });
@@ -26,6 +30,14 @@ async function generateFromSvg() {
   await sharp(svgBuffer).resize(512, 512).png({ quality: 95 }).toFile(logo512AliasPath);
   // Apple touch icon 180x180
   await sharp(svgBuffer).resize(180, 180).png({ quality: 95 }).toFile(apple180Path);
+
+  // Favicons 16x16 e 32x32
+  await sharp(svgBuffer).resize(16, 16).png({ quality: 95 }).toFile(fav16Path);
+  await sharp(svgBuffer).resize(32, 32).png({ quality: 95 }).toFile(fav32Path);
+
+  // favicon.ico multi-resolução (16, 32)
+  const icoBuffer = await pngToIco([fav16Path, fav32Path]);
+  await fs.promises.writeFile(icoPath, icoBuffer);
 
   // OG banner 1200x630 gerado a partir de um SVG template
   const ogSvg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -61,5 +73,8 @@ async function generateFromSvg() {
     logo512AliasPath,
     apple180Path,
     ogPath,
+    fav16Path,
+    fav32Path,
+    icoPath,
   });
 })();
