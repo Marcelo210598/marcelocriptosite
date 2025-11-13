@@ -1,0 +1,21 @@
+{
+  "name": "Marcelo Cripto",
+  "short_name": "Marcelo Cripto",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/brand-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/brand-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
