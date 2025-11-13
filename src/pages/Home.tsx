@@ -8,6 +8,7 @@ import { FavoriteButton } from '../components/FavoriteButton'
 import { PriceChangeBadge } from '../components/UIComponents'
 import { useFavorites } from '../hooks/useStore'
 import { MarketStatsWidget } from '../components/MarketStats'
+import { MarketDebug } from '../components/MarketDebug'
 
 export default function Home(): React.JSX.Element {
   const [items, setItems] = useState<NewsArticle[]>([])
@@ -371,6 +372,12 @@ export default function Home(): React.JSX.Element {
           </div>
         </div>
       )}
+
+      {/* Debug do Mercado - Remover depois de testar */}
+      <div className="mt-10">
+        <h2 className="text-xl font-semibold mb-4">Debug do Mercado</h2>
+        <MarketDebug />
+      </div>
 
       </section>
     </>
