@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { showNotification } from '../utils/notifications'
+import { showNotification } from '../utils'
 
 export const useServiceWorker = () => {
   const [isSupported, setIsSupported] = useState(false)
