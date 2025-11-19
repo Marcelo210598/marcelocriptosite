@@ -1,3 +1,4 @@
+// Sistema de notificações para o site
 export type NotificationType = 'success' | 'error' | 'info' | 'warning'
 
 export function showNotification(message: string, type: NotificationType = 'info'): void {
