@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Plus, TrendingUp, Star, X } from 'lucide-react'
 import { useFavorites } from '../hooks/useStore'
 
-export const MobileQuickActions: React.FC = () => {
+export const QuickActionsMobile: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
   const { favorites } = useFavorites()
 

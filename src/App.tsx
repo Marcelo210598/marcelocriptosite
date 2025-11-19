@@ -14,7 +14,7 @@ import { EnhancedFooter } from './components/EnhancedFooter'
 import { ScrollProgress } from './components/ScrollEffects'
 import { ParticleBackground } from './components/ParticleBackground'
 import { MobileMenu } from './components/MobileMenu'
-import { MobileQuickActions } from './components/MobileQuickActions'
+import { QuickActionsMobile } from './components/QuickActionsMobile'
 import { MobileDashboard } from './components/MobileDashboard'
 import { ServiceWorkerRegister } from './components/ServiceWorkerRegister'
 import { usePerformanceMonitor } from './components/PerformanceMonitor'
@@ -178,7 +178,7 @@ export default function App(): React.JSX.Element {
       <NotificationContainer />
 
       {/* Ações rápidas para mobile */}
-      <MobileQuickActions />
+      <QuickActionsMobile />
 
       {/* Notificações push - componente integrado no header */}
 
