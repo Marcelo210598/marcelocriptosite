@@ -45,6 +45,255 @@ a:hover {
 /* Rolagem suave para navegação por âncoras */
 html { scroll-behavior: smooth; }
 
+/* Animações personalizadas */
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.5); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Animações de transição suave */
+.transition-container {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.transition-container.transitioning {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.animated-route {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.loading-transition {
+  position: relative;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  border-radius: inherit;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner-ring {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid currentColor;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Animações de hover suaves */
+.animated-card {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.animated-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.animated-button {
+  transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+}
+
+.animated-button:active {
+  transform: scale(0.95);
+}
+
+/* Animações de gráficos */
+.animated-chart {
+  transition: opacity 0.3s ease-out;
+}
+
+.animated-chart-card {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.animated-chart-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Animações de ícones */
+.animated-icon {
+  transition: transform 0.2s ease-out;
+}
+
+.animated-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Animações de lista */
+.animated-list-item {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+.animated-list-item:hover {
+  transform: translateX(4px);
+}
+
+/* Animações de progresso */
+.animated-progress-bar {
+  transition: opacity 0.3s ease-out;
+}
+
+/* Animações de skeleton */
+.animated-skeleton {
+  transition: opacity 0.3s ease-out;
+}
+
+/* Animações de loading */
+.animated-loading {
+  transition: opacity 0.3s ease-out;
+}
+
+/* Transições suaves para elementos interativos */
+.smooth-transition {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out, max-height 0.3s ease-out;
+}
+
+/* Animações de entrada suave */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rotateIn {
+  from {
+    opacity: 0;
+    transform: rotate(-5deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Classes utilitárias de animação */
+.animate-slide-up {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideInDown 0.3s ease-out;
+}
+
+.animate-slide-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+.animate-rotate-in {
+  animation: rotateIn 0.3s ease-out;
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.5s ease-out;
+}
+
 /* Separação fluida entre parágrafos na análise, com tons alternados */
 .analysis-flow p {
   margin-top: 0.75rem; /* mt-3 */

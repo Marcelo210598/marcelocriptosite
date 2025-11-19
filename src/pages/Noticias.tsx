@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { fetchNews, type NewsArticle } from '../services/news';
+import { fetchNewsWithRetry, type NewsItem } from '../services/news-safe';
 import { Helmet } from 'react-helmet-async';
 
 export default function Noticias() {
   const [lang, setLang] = useState<'PT' | 'EN'>('PT');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [itemsAll, setItemsAll] = useState<NewsArticle[]>([]);
+  const [itemsAll, setItemsAll] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchRaw, setSearchRaw] = useState<string>('');
@@ -14,6 +14,7 @@ export default function Noticias() {
   const [sort, setSort] = useState<'recent' | 'oldest'>('recent');
   const [visibleCount, setVisibleCount] = useState<number>(9);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isMockData, setIsMockData] = useState<boolean>(false);
 
   const categories = useMemo(
     () => [
@@ -38,12 +39,14 @@ export default function Noticias() {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchNews({ lang, categories: selectedCategories, pageSize: 48, maxAgeDays: 7 });
-        if (!cancelled) setItemsAll(data);
-        // Fallback simples: se não houver dados em PT, tenta EN
-        if (!cancelled && lang === 'PT' && data.length === 0) {
-          const enData = await fetchNews({ lang: 'EN', categories: selectedCategories, pageSize: 48, maxAgeDays: 7 });
-          setItemsAll(enData);
+        const result = await fetchNewsWithRetry(selectedCategories);
+        if (!cancelled) {
+          setItemsAll(result.data);
+          setIsMockData(result.isMock);
+        }
+        
+        if (result.error) {
+          console.warn('Aviso:', result.error)
         }
       } catch (e: any) {
         if (!cancelled) setError(e?.message || 'Erro ao carregar notícias');
@@ -177,7 +180,7 @@ export default function Noticias() {
   };
 
   const filteredSorted = useMemo(() => {
-    const byQuery = (n: NewsArticle) => {
+    const byQuery = (n: NewsItem) => {
       if (!search.trim()) return true;
       const q = search.trim().toLowerCase();
       return (
@@ -187,7 +190,7 @@ export default function Noticias() {
     };
     const arr = itemsAll.filter(byQuery);
     arr.sort((a, b) =>
-      sort === 'recent' ? b.publishedAt - a.publishedAt : a.publishedAt - b.publishedAt
+      sort === 'recent' ? b.published_on - a.published_on : a.published_on - b.published_on
     );
     return arr;
   }, [itemsAll, search, sort]);
@@ -310,6 +313,11 @@ export default function Noticias() {
         </div>
 
         {/* Estados de carregamento e erro */}
+        {isMockData && (
+          <div className="p-4 mb-6 bg-yellow-900 border border-yellow-700 text-yellow-200 rounded">
+            ⚠️ Você está visualizando notícias de demonstração. A API de notícias está temporariamente indisponível.
+          </div>
+        )}
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -333,9 +341,9 @@ export default function Noticias() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {visibleItems.map((n) => (
               <article key={n.id} className="bg-zinc-900 rounded overflow-hidden border border-zinc-800">
-                {n.imageUrl ? (
+                {n.imageurl ? (
                   <img
-                    src={toProxy(n.imageUrl)}
+                    src={toProxy(n.imageurl)}
                     alt={n.title}
                     className="w-full h-40 object-cover"
                     loading="lazy"
@@ -358,7 +366,7 @@ export default function Noticias() {
                   <div className="mt-2 text-sm text-zinc-400">
                     <span>{n.source}</span>
                     <span className="mx-2">•</span>
-                    <span>{formatDate(n.publishedAt)}</span>
+                    <span>{formatDate(n.published_on)}</span>
                     {n.body && (
                       <>
                         <span className="mx-2">•</span>
@@ -370,9 +378,9 @@ export default function Noticias() {
                     <p className="mt-3 text-zinc-300 line-clamp-3">{highlightText(n.body, search)}</p>
                   )}
                   {/* Tags/Categorias */}
-                  {splitCategories(n.categories).length > 0 && (
+                  {splitCategories(n.tags).length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {splitCategories(n.categories).map((tag) => (
+                      {splitCategories(n.tags).map((tag) => (
                         <span key={tag} className="text-xs px-2 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700">
                           {tag}
                         </span>

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { TrendingUp, TrendingDown, DollarSign, Activity } from 'lucide-react'
+import { fetchGlobalStatsWithRetry } from '../services/news-safe'
 
 interface MarketStats {
   total_market_cap: number
-  total_volume_24h: number
+  total_volume: number
   market_cap_change_percentage_24h_usd: number
   active_cryptocurrencies: number
 }
@@ -11,15 +12,25 @@ interface MarketStats {
 export const MarketStatsWidget: React.FC = () => {
   const [stats, setStats] = useState<MarketStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isMock, setIsMock] = useState(false)
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/global')
-        const data = await response.json()
-        setStats(data.data)
+        const result = await fetchGlobalStatsWithRetry()
+        setStats({
+          total_market_cap: result.data.total_market_cap.usd || 0,
+          total_volume: result.data.total_volume.usd || 0,
+          market_cap_change_percentage_24h_usd: result.data.market_cap_change_percentage_24h_usd || 0,
+          active_cryptocurrencies: result.data.active_cryptocurrencies || 0
+        })
+        setIsMock(result.isMock)
+        if (result.error) {
+          console.warn('Aviso:', result.error)
+        }
       } catch (error) {
         console.error('Erro ao buscar estatísticas globais:', error)
+        setIsMock(true)
       } finally {
         setLoading(false)
       }
@@ -58,7 +69,7 @@ export const MarketStatsWidget: React.FC = () => {
   const statsItems = [
     {
       icon: <DollarSign className="w-5 h-5 text-green-400" />,
-      label: 'Market Cap',
+      label: 'Capitalização',
       value: formatCurrency(stats.total_market_cap),
       change: stats.market_cap_change_percentage_24h_usd,
       color: 'green'
@@ -66,7 +77,7 @@ export const MarketStatsWidget: React.FC = () => {
     {
       icon: <Activity className="w-5 h-5 text-blue-400" />,
       label: 'Volume 24h',
-      value: formatCurrency(stats.total_volume_24h),
+      value: formatCurrency(stats.total_volume),
       change: null,
       color: 'blue'
     },

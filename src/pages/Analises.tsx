@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { fetchMarketChart, fetchMarkets, fetchSearchCoins } from '../services/coingecko'
-import type { MarketCoin, SearchCoin } from '../services/coingecko'
+import { fetchMarketChartSafe, fetchMarketsSafe, fetchSearchCoinsSafe } from '../services/coingecko-safe'
+import type { MarketCoin, SearchCoin } from '../services/coingecko-safe'
 
 type Point = [number, number]
 
@@ -514,6 +514,7 @@ export default function Analises(): React.JSX.Element {
   const [chart2, setChart2] = useState<Point[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [isMockData, setIsMockData] = useState<boolean>(false)
   const [searchQ, setSearchQ] = useState<string>('')
   const [searchResults, setSearchResults] = useState<SearchCoin[]>([])
   const [searchQ2, setSearchQ2] = useState<string>('')
@@ -526,8 +527,17 @@ export default function Analises(): React.JSX.Element {
     let active = true
     setLoading(true)
     setError(null)
-    fetchMarketChart({ id, vsCurrency: vs, days: rangeDays })
-      .then((d) => { if (active) setChart(d.prices) })
+    fetchMarketChartSafe({ id, vsCurrency: vs, days: rangeDays })
+      .then((result) => { 
+        if (active) {
+          setChart(result.data.prices)
+          setIsMockData(result.isMock)
+          
+          if (result.error) {
+            console.warn('Aviso gráfico:', result.error)
+          }
+        }
+      })
       .catch((e) => { if (active) { setError(e?.message ?? 'Falha ao carregar histórico'); setChart([]) } })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
@@ -537,8 +547,14 @@ export default function Analises(): React.JSX.Element {
   useEffect(() => {
     let active = true
     if (compareEnabled && id2) {
-      fetchMarketChart({ id: id2, vsCurrency: vs, days: rangeDays })
-        .then((d) => { if (active) setChart2(d.prices) })
+      fetchMarketChartSafe({ id: id2, vsCurrency: vs, days: rangeDays })
+        .then((result) => { 
+          if (active) setChart2(result.data.prices)
+          
+          if (result.error) {
+            console.warn('Aviso gráfico comparação:', result.error)
+          }
+        })
         .catch(() => { if (active) setChart2([]) })
     } else {
       setChart2([])
@@ -549,8 +565,14 @@ export default function Analises(): React.JSX.Element {
   // Carregar top moedas por valor de mercado para navegação rápida
   useEffect(() => {
     let active = true
-    fetchMarkets({ vsCurrency: vs, perPage: 12, page: 1, order: 'market_cap_desc' })
-      .then((coins) => { if (active) setTopCoins(coins) })
+    fetchMarketsSafe({ vsCurrency: vs, perPage: 12, page: 1, order: 'market_cap_desc' })
+      .then((result) => { 
+        if (active) setTopCoins(result.data)
+        
+        if (result.error) {
+          console.warn('Aviso mercado:', result.error)
+        }
+      })
       .catch(() => { if (active) setTopCoins([]) })
     return () => { active = false }
   }, [vs])
@@ -577,7 +599,13 @@ export default function Analises(): React.JSX.Element {
   useEffect(() => {
     let active = true
     const t = setTimeout(() => {
-      fetchSearchCoins(searchQ).then((res) => { if (active) setSearchResults(res) }).catch(() => { if (active) setSearchResults([]) })
+      fetchSearchCoinsSafe(searchQ).then((result) => { 
+        if (active) setSearchResults(result.data)
+        
+        if (result.error) {
+          console.warn('Aviso busca:', result.error)
+        }
+      }).catch(() => { if (active) setSearchResults([]) })
     }, 300)
     return () => { active = false; clearTimeout(t) }
   }, [searchQ])
@@ -586,7 +614,13 @@ export default function Analises(): React.JSX.Element {
   useEffect(() => {
     let active = true
     const t = setTimeout(() => {
-      fetchSearchCoins(searchQ2).then((res) => { if (active) setSearchResults2(res) }).catch(() => { if (active) setSearchResults2([]) })
+      fetchSearchCoinsSafe(searchQ2).then((result) => { 
+        if (active) setSearchResults2(result.data)
+        
+        if (result.error) {
+          console.warn('Aviso busca comparação:', result.error)
+        }
+      }).catch(() => { if (active) setSearchResults2([]) })
     }, 300)
     return () => { active = false; clearTimeout(t) }
   }, [searchQ2])
@@ -706,6 +740,12 @@ export default function Analises(): React.JSX.Element {
     <section className="mx-auto max-w-5xl px-6 py-10">
       <h2 className="text-2xl font-bold">Análises técnicas</h2>
       <p className="mt-2 text-zinc-400">Selecione moeda, moeda base e intervalo; ative indicadores.</p>
+      
+      {isMockData && (
+        <div className="p-4 mb-6 bg-yellow-900 border border-yellow-700 text-yellow-200 rounded">
+          ⚠️ Você está visualizando dados de demonstração. A API de análise está temporariamente indisponível.
+        </div>
+      )}
 
       {/* Navegação rápida pelas maiores criptomoedas */}
       <div className="mt-4">

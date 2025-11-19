@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, TrendingUp, Star, X } from 'lucide-react'
 import { useFavorites } from '../hooks/useStore'
-import { showNotification } from '../utils/notifications'
 
 export const MobileQuickActions: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -29,9 +28,8 @@ export const MobileQuickActions: React.FC = () => {
         const favoritesSection = document.getElementById('favorites-section')
         if (favoritesSection) {
           favoritesSection.scrollIntoView({ behavior: 'smooth' })
-          showNotification('Abrindo favoritos', 'info')
         } else {
-          showNotification('Nenhuma moeda favorita ainda', 'info')
+          alert('Nenhuma moeda favorita ainda')
         }
       }
     },

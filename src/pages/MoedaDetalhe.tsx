@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { fetchCoinDetail, fetchMarketChart, type CoinDetail } from '../services/coingecko'
+import { fetchCoinDetailSafe, fetchMarketChartSafe, type CoinDetail } from '../services/coingecko-safe'
 
 function useCurrencyFormatter(vs: 'usd' | 'brl' | 'eur') {
   return useMemo(() => new Intl.NumberFormat('en-US', { style: 'currency', currency: vs.toUpperCase() }), [vs])
@@ -101,20 +101,27 @@ export default function MoedaDetalhe(): React.JSX.Element {
   const [coin, setCoin] = useState<CoinDetail | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
+  const [isMockData, setIsMockData] = useState<boolean>(false)
   const [fav, setFav] = useState<boolean>(false)
   const [chart, setChart] = useState<[number, number][]>([])
   const [chartLoading, setChartLoading] = useState<boolean>(false)
   const [chartError, setChartError] = useState<string | null>(null)
+  const [isChartMock, setIsChartMock] = useState<boolean>(false)
 
   useEffect(() => {
     if (!id) return
     let active = true
     setLoading(true)
-    fetchCoinDetail(id)
-      .then((d) => {
+    fetchCoinDetailSafe(id)
+      .then((result) => {
         if (!active) return
-        setCoin(d)
+        setCoin(result.data)
+        setIsMockData(result.isMock)
         setError(null)
+        
+        if (result.error) {
+          console.warn('Aviso:', result.error)
+        }
       })
       .catch((e) => {
         if (!active) return
@@ -134,10 +141,15 @@ export default function MoedaDetalhe(): React.JSX.Element {
     let active = true
     setChartLoading(true)
     setChartError(null)
-    fetchMarketChart({ id, vsCurrency: vs, days: rangeDays })
-      .then((d) => {
+    fetchMarketChartSafe({ id, vsCurrency: vs, days: rangeDays })
+      .then((result) => {
         if (!active) return
-        setChart(d.prices)
+        setChart(result.data.prices)
+        setIsChartMock(result.isMock)
+        
+        if (result.error) {
+          console.warn('Aviso gráfico:', result.error)
+        }
       })
       .catch((e) => {
         if (!active) return
@@ -191,6 +203,12 @@ export default function MoedaDetalhe(): React.JSX.Element {
         <Link to={`/market?vs=${vs}`} className="text-sm text-indigo-300 hover:text-indigo-200">← Voltar ao Market</Link>
       </div>
       <p className="mt-2 text-zinc-400">Detalhes em tempo real via CoinGecko.</p>
+      
+      {isMockData && (
+        <div className="p-4 mb-6 bg-yellow-900 border border-yellow-700 text-yellow-200 rounded">
+          ⚠️ Você está visualizando dados de demonstração. A API está temporariamente indisponível.
+        </div>
+      )}
 
       <div className="mt-4 flex items-center gap-3">
         <img src={coin?.image} alt={coin?.name} className="h-10 w-10 rounded-full" />
@@ -239,7 +257,7 @@ export default function MoedaDetalhe(): React.JSX.Element {
             </div>
           </div>
           <div className="rounded border border-zinc-700 bg-zinc-900 p-4">
-            <div className="text-sm text-zinc-400">Market Cap</div>
+            <div className="text-sm text-zinc-400">Capitalização</div>
             <div className="mt-1 text-xl">{mc != null ? nfCurrency.format(mc) : '—'}</div>
           </div>
           <div className="rounded border border-zinc-700 bg-zinc-900 p-4">
@@ -256,6 +274,11 @@ export default function MoedaDetalhe(): React.JSX.Element {
             <div className="text-sm text-zinc-400">Histórico ({rangeDays === 1 ? '24h' : rangeDays === 7 ? '7 dias' : '30 dias'})</div>
             {chartLoading && <div className="text-xs text-zinc-500">Carregando gráfico…</div>}
           </div>
+          {isChartMock && (
+            <div className="mb-2 p-2 rounded border border-yellow-700 bg-yellow-900/50 text-xs text-yellow-200">
+              📊 Gráfico de demonstração - API de histórico indisponível
+            </div>
+          )}
           {chartError && <div className="rounded border border-red-500/40 bg-red-500/10 p-2 text-xs text-red-300">{chartError}</div>}
           {!chartError && chart.length > 0 ? (
             <ChartLine points={chart} />

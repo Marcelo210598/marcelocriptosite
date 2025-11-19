@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { TrendingUp, TrendingDown, Star } from 'lucide-react'
-import { fetchMarkets, type MarketCoin } from '../services/coingecko'
+import { fetchMarketsSafe, type MarketCoin } from '../services/coingecko-safe'
 import { SearchBar, CoinCard, FilterTabs } from '../components/MarketComponents'
 import { useSearch } from '../hooks/useUtils'
 import { useFavorites } from '../hooks/useStore'
@@ -10,6 +10,7 @@ export default function Market(): React.JSX.Element {
   const [coins, setCoins] = useState<MarketCoin[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isMockData, setIsMockData] = useState<boolean>(false)
   const [searchParams, setSearchParams] = useSearchParams()
   
   const [vs, setVs] = useState<'usd' | 'brl' | 'eur'>('usd')
@@ -55,14 +56,19 @@ export default function Market(): React.JSX.Element {
       setLoading(true)
       setError(null)
       try {
-        const data = await fetchMarkets({ 
+        const result = await fetchMarketsSafe({ 
           vsCurrency: vs, 
           perPage: 250, 
           page: 1, 
           order: 'market_cap_desc',
           signal: controller.signal 
         })
-        setCoins(data)
+        setCoins(result.data)
+        setIsMockData(result.isMock)
+        
+        if (result.error) {
+          console.warn('Aviso:', result.error)
+        }
       } catch (e: any) {
         if (e?.name !== 'AbortError') {
           setError('Não foi possível carregar o mercado agora.')
@@ -120,7 +126,7 @@ export default function Market(): React.JSX.Element {
   }, [sortedCoins, favoriteCoins, activeTab])
 
   const sortOptions = [
-    { id: 'market_cap', label: 'Market Cap' },
+    { id: 'market_cap', label: 'Capitalização' },
     { id: 'price', label: 'Preço' },
     { id: 'change', label: 'Mudança 24h' },
   ]
@@ -161,6 +167,12 @@ export default function Market(): React.JSX.Element {
     <div className="mx-auto max-w-7xl px-6 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-4 animate-fade-in-up">Mercado de Criptomoedas</h1>
+        
+        {isMockData && (
+          <div className="p-4 mb-6 bg-yellow-900 border border-yellow-700 text-yellow-200 rounded">
+            ⚠️ Você está visualizando dados de demonstração. A API de mercado está temporariamente indisponível.
+          </div>
+        )}
         
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <SearchBar 

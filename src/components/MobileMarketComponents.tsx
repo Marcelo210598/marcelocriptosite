@@ -2,7 +2,7 @@ import React from 'react'
 import { TrendingUp, TrendingDown, Star, Heart } from 'lucide-react'
 import { MarketCoin } from '../services/coingecko'
 import { useFavorites } from '../hooks/useStore'
-import { showNotification } from '../utils/notifications'
+
 import { LazyImage } from './OptimizedImage'
 
 interface MobileCoinCardProps {
@@ -24,10 +24,10 @@ export const MobileCoinCard: React.FC<MobileCoinCardProps> = ({
     
     if (isFavorite) {
       removeFavorite(coin.id)
-      showNotification(`${coin.name} removido dos favoritos`, 'info')
+      console.log(`${coin.name} removido dos favoritos`)
     } else {
-      addFavorite(coin)
-      showNotification(`${coin.name} adicionado aos favoritos`, 'success')
+      addFavorite(coin.id)
+      console.log(`${coin.name} adicionado aos favoritos`)
     }
     
     onFavorite?.(coin)
@@ -106,7 +106,7 @@ export const MobileCoinCard: React.FC<MobileCoinCardProps> = ({
             </p>
           </div>
           <div>
-            <p className="text-zinc-400 text-xs">Market Cap</p>
+            <p className="text-zinc-400 text-xs">Capitalização</p>
             <p className="text-white font-medium text-sm">
               ${(coin.market_cap / 1000000000).toFixed(1)}B
             </p>
@@ -177,7 +177,7 @@ export const MobileMarketGrid: React.FC<MobileMarketGridProps> = ({
         <MobileCoinCard 
           key={coin.id}
           coin={coin}
-          isFavorite={favorites.some(fav => fav.id === coin.id)}
+          isFavorite={favorites.some(fav => fav === coin.id)}
           onFavorite={onFavoriteToggle}
         />
       ))}

@@ -1,23 +1,28 @@
 import React, { useEffect, useState } from 'react'
-import { fetchMarkets, type MarketCoin } from '../services/coingecko'
+import { fetchMarketsSafe, type MarketCoin } from '../services/coingecko-safe'
 import { InlineLoader } from './Loading'
 
 export const MarketDebug: React.FC = () => {
   const [coins, setCoins] = useState<MarketCoin[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isMock, setIsMock] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true)
-        const data = await fetchMarkets({ 
+        const result = await fetchMarketsSafe({ 
           vsCurrency: 'usd', 
           perPage: 10, 
           page: 1 
         })
-        console.log('Market data received:', data.length, 'coins')
-        setCoins(data)
+        console.log('Market data received:', result.data.length, 'coins', result.isMock ? '(MOCK)' : '(REAL)')
+        setCoins(result.data)
+        setIsMock(result.isMock)
+        if (result.error) {
+          console.warn('Aviso:', result.error)
+        }
       } catch (err: any) {
         console.error('Market error:', err)
         setError(err.message || 'Erro desconhecido')
@@ -49,7 +54,9 @@ export const MarketDebug: React.FC = () => {
   return (
     <div className="p-4 bg-zinc-900 rounded-lg">
       <h3 className="text-white font-semibold mb-3">Debug do Mercado</h3>
-      <p className="text-zinc-400 text-sm mb-4">Carregou {coins.length} moedas</p>
+      <p className="text-zinc-400 text-sm mb-4">
+        Carregou {coins.length} moedas {isMock && <span className="text-yellow-400">(Dados de Demonstração)</span>}
+      </p>
       
       {coins.length > 0 && (
         <div className="space-y-2">

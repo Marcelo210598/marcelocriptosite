@@ -9,16 +9,25 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:analyze": "vite build --mode analyze",
+    "build:profile": "vite build --profile",
     "preview": "vite preview",
     "tsc": "tsc --noEmit",
-    "generate:brand": "node scripts/generate-brand-assets.mjs"
+    "generate:brand": "node scripts/generate-brand-assets.mjs",
+    "optimize": "npm run build && npm run tsc"
   },
   "dependencies": {
+    "idb": "^8.0.3",
+    "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-helmet-async": "^2.0.5",
     "react-router-dom": "^7.9.5",
-    "lucide-react": "^0.344.0",
+    "recharts": "^3.4.1",
+    "workbox-expiration": "^7.3.0",
+    "workbox-precaching": "^7.3.0",
+    "workbox-routing": "^7.3.0",
+    "workbox-strategies": "^7.3.0",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

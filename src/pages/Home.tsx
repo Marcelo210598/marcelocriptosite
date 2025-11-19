@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { fetchNews, type NewsArticle } from '../services/news'
-import { fetchMarkets, type MarketCoin } from '../services/coingecko'
+import { fetchNewsWithRetry, type NewsItem } from '../services/news-safe'
+import { fetchMarketsSafe, type MarketCoin } from '../services/coingecko-safe'
 import { Helmet } from 'react-helmet-async'
 import { MarketSkeleton, NewsCarouselSkeleton, CoinListSkeleton } from '../components/SkeletonLoader'
 import { FavoriteButton } from '../components/FavoriteButton'
@@ -12,7 +12,7 @@ import { MarketDebug } from '../components/MarketDebug'
 import { PageTitle, SectionTitle, BodyText } from '../components/ResponsiveText'
 
 export default function Home(): React.JSX.Element {
-  const [items, setItems] = useState<NewsArticle[]>([])
+  const [items, setItems] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [idx, setIdx] = useState(0)
@@ -40,19 +40,15 @@ export default function Home(): React.JSX.Element {
       try {
         // Buscar notícias com foco em categorias populares
         const cats = ['Blockchain','Altcoin','Market','Trading','Regulation','Technology','DeFi','NFT']
-        let data = await fetchNews({ lang: 'PT', categories: cats, pageSize: 24, maxAgeDays: 7, signal: ctrl.signal })
-        // Fallback para EN se vier pouco conteúdo; se EN falhar, ignorar (mantém PT)
-        if (data.length < 5 && !import.meta.env.DEV) {
-          try {
-            const en = await fetchNews({ lang: 'EN', categories: cats, pageSize: 24, maxAgeDays: 7, signal: ctrl.signal })
-            data = [...data, ...en]
-          } catch (e) {
-            // ignora falhas na busca EN quando já temos algum conteúdo
-          }
+        const result = await fetchNewsWithRetry(cats)
+        
+        if (result.error) {
+          console.warn('Aviso:', result.error)
         }
+        
         // Filtrar itens com imagem para melhor visual do carrossel e ordenar por data
-        const withImages = data.filter((d) => !!d.imageUrl)
-        const sorted = withImages.sort((a, b) => b.publishedAt - a.publishedAt)
+        const withImages = result.data.filter((d) => !!d.imageurl)
+        const sorted = withImages.sort((a, b) => b.published_on - a.published_on)
         if (!cancelled) {
           setItems(sorted.slice(0, 10))
           setIdx(0)
@@ -82,7 +78,7 @@ export default function Home(): React.JSX.Element {
   const current = useMemo(() => items[idx] || null, [items, idx])
   const goPrev = () => setIdx((i) => (i - 1 + items.length) % items.length)
   const goNext = () => setIdx((i) => (i + 1) % items.length)
-  const openArticle = (a: NewsArticle) => navigate(`/noticia/${encodeURIComponent(a.id)}`, { state: a })
+  const openArticle = (a: NewsItem) => navigate(`/noticia/${encodeURIComponent(a.id)}`, { state: a })
   const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://marcelocriptosite.vercel.app'
   const siteUrl = `${siteOrigin}/`
   const brandOgUrl = `${siteOrigin}/brand-og.png`
@@ -100,8 +96,13 @@ export default function Home(): React.JSX.Element {
       setMarketLoading(true)
       setMarketError(null)
       try {
-        const data = await fetchMarkets({ vsCurrency: vs, perPage: 100, page: 1, order: 'market_cap_desc', signal: ctrl.signal })
-        if (!cancelled) setMarketCoins(data)
+        const result = await fetchMarketsSafe({ vsCurrency: vs, perPage: 100, page: 1, order: 'market_cap_desc', signal: ctrl.signal })
+        if (!cancelled) {
+          setMarketCoins(result.data)
+          if (result.error) {
+            console.warn('Aviso:', result.error)
+          }
+        }
       } catch (e: any) {
         if (e?.name === 'AbortError' || /aborted/i.test(String(e?.message))) {
           // ignorar abortos de Strict Mode/dev
@@ -169,11 +170,11 @@ export default function Home(): React.JSX.Element {
       </Helmet>
       <section className="mx-auto max-w-5xl px-6 py-10">
         <PageTitle className="animate-fade-in-up">Noticias e Analises</PageTitle>
-        <BodyText className="animate-fade-in-up max-w-2xl" style={{animationDelay: '0.2s'}} muted>
+        <BodyText className="animate-fade-in-up max-w-2xl" muted>
           Acompanhe novidades, entenda conceitos e aprofunde-se em análises fundamentais do mercado
           de criptomoedas.
         </BodyText>
-      <div className="mt-5 flex gap-3 animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+      <div className="mt-5 flex gap-3 animate-fade-in-up">
         <Link to="/analises" className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition-all-300 hover-lift">Ir para Análises</Link>
         <Link to="/noticias" className="rounded border border-indigo-500/50 px-4 py-2 text-sm font-medium text-indigo-200 hover:border-indigo-400 hover:bg-indigo-500/10 transition-all-300">Ver Notícias</Link>
       </div>
@@ -184,7 +185,7 @@ export default function Home(): React.JSX.Element {
 
       <div className="mt-8">
         <div className="flex items-center justify-between">
-          <SectionTitle>Market Snapshot</SectionTitle>
+          <SectionTitle>Visão do Mercado</SectionTitle>
           <div className="flex items-center gap-2">
             <label className="text-sm text-zinc-400">Moeda:</label>
             <select value={vs} onChange={(e) => setVs(e.target.value as typeof vs)} className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-white">
@@ -202,7 +203,7 @@ export default function Home(): React.JSX.Element {
         {!marketLoading && !marketError && (
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
-              <div className="text-xs text-zinc-400">Market Cap</div>
+              <div className="text-xs text-zinc-400">Capitalização</div>
               <div className="mt-1 text-lg font-semibold">{nfCurrency.format(totalMarketCap)}</div>
             </div>
             <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
@@ -223,7 +224,7 @@ export default function Home(): React.JSX.Element {
 
       <div className="mt-10">
         <div className="flex items-center justify-between">
-          <SectionTitle>Trending & Top Movers (24h)</SectionTitle>
+          <SectionTitle>Destaques e Maiores Movimentações (24h)</SectionTitle>
         </div>
         {marketLoading && (
           <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -284,9 +285,9 @@ export default function Home(): React.JSX.Element {
         {!loading && !error && current && (
           <div className="relative mt-4 overflow-hidden rounded-lg border border-zinc-700">
             {/* Imagem de fundo */}
-            {current.imageUrl ? (
+            {current.imageurl ? (
               <img
-                src={toProxy(current.imageUrl)}
+                src={toProxy(current.imageurl)}
                 alt={current.title}
                 className="h-52 w-full object-cover"
                 loading="lazy"
@@ -303,7 +304,7 @@ export default function Home(): React.JSX.Element {
             {/* Overlay de texto */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
-              <div className="text-[11px] text-zinc-300">{current.source} • {new Date(current.publishedAt * 1000).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+              <div className="text-[11px] text-zinc-300">{current.source} • {new Date(current.published_on * 1000).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
               <button onClick={() => openArticle(current)} className="mt-1 text-sm font-semibold text-white hover:underline text-left">
                 {current.title}
               </button>
